@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: coffee-hrm-database
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: coffee-hrm
+    ports:
+      - "3306:3306"
+    networks:
+      - coffee-hrm-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:latest
+    container_name: coffee-hrm-cache
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - coffee-hrm-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+
+  springboot:
+    build: .
+    container_name: coffee-hrm-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/coffee-hrm
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CORS_ALLOWED_ORIGINS: http://localhost:5000
+    ports:
+      - "8080:8080"
+    networks:
+      - coffee-hrm-network
+
+  react:
+    image: coffee-hrm-react
+    container_name: coffee-hrm-frontend
+    depends_on:
+      - springboot
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+      VITE_BASE_API_URL: http://localhost:8080/api/
+    ports:
+      - "5000:5000"
+    networks:
+      - coffee-hrm-network
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: coffee-hrm-proxy
+    ports:
+      - "4040:4040"
+    command:
+      - "http"
+      - "springboot:8080"
+    environment:
+      - NGROK_AUTHTOKEN=2uGFfXF5tGRFS5hnyk52mCEupVA_78JK4hceAgJAYUiYKHDzi
+      - NGROK_REGION=ap
+    networks:
+      - coffee-hrm-network
+    depends_on:
+      - springboot
+
+networks:
+  coffee-hrm-network:
+    driver: bridge

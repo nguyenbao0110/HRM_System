@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: QRCodeCheckIn
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+    time-zone: Asia/Ho_Chi_Minh
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/qrcode_checkin_schema}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  cache:
+    type: redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      time-out: 300000
+jwt:
+  signerKey: GYs7ZuOv7P9SwyHE2FVVgjT+wnuNAcVAf8ksJdtoG7a8PuE9+vUcGtVX02XINr6B
+  refreshable-duration: 36000
+
+
+
